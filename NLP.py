@@ -5,8 +5,6 @@
 #  */ NHS DIGITAL MRS PRIYA BASKER AND MR JOHNATHAN HOPE 
 # Innovative uses of Data team NHS DIGITAL
 
-#ICD2VEC NLPK
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import codecs
@@ -58,7 +56,7 @@ from keras.layers import TimeDistributed
 from keras.layers.convolutional import Conv1D, MaxPooling1D
 
 
-
+nltk.download('stopwords')
 
 
 ## murdo df tutorial
@@ -814,7 +812,7 @@ init_state = tf.placeholder(tf.float32, [batch_size, state_size])
 # loss = get_loss(get_batch(Y).reshape([batch_size, 1]), predictions)
 
 
-
+]
 
 
 
