@@ -17,6 +17,7 @@ import multiprocessing
 import os
 import pprint
 import re
+from numpy.lib.twodim_base import diag
 import regex as re
 
 import matplotlib.pyplot as plt
@@ -114,7 +115,7 @@ icdf2.head(10)
 #define hyperparameters
 
 # Dimensionality
-num_features = 400
+num_features = 3
 
 #
 # Minimum word count threshold.
@@ -477,360 +478,52 @@ diagdf.head(10)
 
 
 ##### CNN-RNN  Convolutional neural, LSTM
-ICD_tensors =diagdf['vector'].reshape
-print(ICD_tensors)
+# (X_train, y_train) = (diagdf['vector'].values, diagdf['icd9_code'].values)
+# np.asarray(x).astype('float32')
+diagdf.dtypes
+print(np.asarray(diagdf['vector'][0]).astype("float32"))
+for i in diagdf['vector']:
+    x = np.asarray(i).astype('float32')
+# x = np.stack(x, axis=0) 
+for i in diagdf['seq_num']:
+    y = np.asarray(i).astype('float32')
 
-diagdf['vector'][0].reshape(4,100)
+# x = np.asarray(diagdf['vector']).astype('float32')
 
-data_dim = 400
-timesteps = 8
-num_classes = 2
+# (X_train, y_train) = (np.asarray(diagdf['vector'].astype("float32")), np.asarray(diagdf['icd9_code']).astype("float32"))
+data = (x.reshape(1,-1), y.reshape(1,-1))
+model.fit(data, data, epochs=1)
+
+model.fit( x=data[0] , y=data[1], batch_size=10 , epochs=10 , verbose=1 , validation_data = (data[0],data[1]))
+
+X_train = x.reshape(-1, 1, 3)
+X_test  = x.reshape(-1, 1, 3)
+y_train = y.reshape(-1, 1, 1)
+y_test = y.reshape(-1, 1, 1)
 
 model = Sequential()
-model.add(LSTM(30, return_sequences=True,
-               input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 30
-model.add(LSTM(30, return_sequences=True))  # returns a sequence of vectors of dimension 30
-model.add(LSTM(30))  # return a single vector of dimension 30
-model.add(Dense(1, activation='softmax'))
+model.add(LSTM(100, input_shape=(1, 3), return_sequences=True))
+model.add(LSTM(5, input_shape=(1, 3), return_sequences=True))
+model.compile(loss="mean_absolute_error", optimizer="adam", metrics= ['accuracy'])
 
-model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
-              metrics=['accuracy'])
+history = model.fit(X_train,y_train,epochs=100, validation_data=(X_test,y_test))
+model.save('kannan')
+model = load_model('kannan')
 
-model.summary()
-(X_train, y_train) = (diagdf['vector'], diagdf['icd9_code'])
-
-model.fit(X_train, y_train, batch_size = 400, epochs = 20, verbose = 1)
-
-
-
+yhat = model.predict(X_train, verbose=0)
+print(yhat)
+# model.fit(X_train, y_train, batch_size = 100, epochs = 20, verbose = 1)
+history = model.fit(
+    x,
+    y,
+    batch_size=64,
+    epochs=2,
+    # We pass some validation for
+    # monitoring validation loss and metrics
+    # at the end of each epoch
+    validation_data=(x_val, y_val),
+)
 ### Custom neural layer Ajit Patra Rhodes scholar suggestion Jenner Institute, University of Oxford
 # TensorFlow and tf.keras
-import tensorflow as tf
-from tensorflow import keras
-
-# Helper libraries
-import numpy as np
-import matplotlib.pyplot as plt
-
-print(tf.__version__)
-
-# 'load data
-fashion_mnist = diagdf['vector'].reshape
-(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
-
-# init
-class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
-               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-
-
-train_images = train_images / 255.0
-test_images = test_images / 255.0
-
-
-
-
-
-
-
-
-
-###custom layer lambda
-###reshape transpose
-from keras.layers import Reshape
-
-## Need to write custom neural layer to transfor 400,1 tensors. Manifold learning
-yote = Sequential()
-yote.add(TimeDistributed(Conv1D(filters=5, kernel_size=3, activation='relu'), batch_input_shape=(24,None,24,1)))
-yote.add(TimeDistributed(MaxPooling1D(pool_size=2)))
-yote.add(TimeDistributed(Flatten()))
-yote.add(LSTM(50, stateful=True, return_sequences=True))
-yote.add(LSTM(10, stateful=True))
-yote.add(Dense(24))
-yote.compile(optimizer='adam', loss='mse', metrics= ['mae', 'mape', 'acc'])
-
-yote.summary()
-
-dataVar_tensor = tf.constant(diagdf['vector'][0], dtype = tf.float32, shape=[400,1])
-for x in dataVar_tensor:
-    print(x)
-
-# a = np.array(diagdf[])
-diagdf['vector'].values[0]
-ICD_tensors =diagdf['vector'].values
-
-
-tsne = sklearn.manifold.TSNE(n_components=2, random_state=0)
-tensors_matrix_2d = tsne.fit_transform(ICD_tensors)
-print(dataVar_tensor)
-
-
-
-
-
-
-
-num_epochs = 100
-total_series_length = 50000
-truncated_backprop_length = 15
-state_size = 4
-num_classes = 2
-echo_step = 3
-batch_size = 5
-num_batches = total_series_length//batch_size//truncated_backprop_length
-
-
-
-# yote = Sequential()
-# yote.add(Reshape((400, 1), input_shape=(400,1)))
-# yote.add(TimeDistributed(Conv1D(filters=5, kernel_size=3, activation='relu'), batch_input_shape=(24,None,24,1)))
-# yote.add(TimeDistributed(MaxPooling1D(pool_size=2)))
-# yote.add(TimeDistributed(Flatten()))
-# yote.add(LSTM(50, stateful=True, return_sequences=True))
-# yote.add(LSTM(10, stateful=True))
-# yote.add(Dense(24))
-# yote.compile(optimizer='adam', loss='mse', metrics= ['mae', 'mape', 'acc'])
-
-# yote.summary()
-
-
-
-yote = Sequential()
-yote.add(Reshape((3, 3), input_shape=(400,1)))
-yote.add(TimeDistributed(Conv1D(filters=5, kernel_size=3, activation='relu'), batch_input_shape=(24,None,24,1)))
-yote.add(TimeDistributed(MaxPooling1D(pool_size=2)))
-yote.add(TimeDistributed(Flatten()))
-yote.add(LSTM(50, stateful=True, return_sequences=True))
-yote.add(LSTM(10, stateful=True))
-yote.add(Dense(24))
-yote.compile(optimizer='adam', loss='mse', metrics= ['mae', 'mape', 'acc'])
-
-yote.summary()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def generateData():
-    x = np.array(np.random.choice(2, total_series_length, p=[0.5, 0.5]))
-    y = np.roll(x, echo_step)
-    y[0:echo_step] = 0
-
-    x = x.reshape((batch_size, -1))  # The first index changing slowest, subseries as rows
-    y = y.reshape((batch_size, -1))
-
-    return (x, y)
-
-print(generateData())
-
-
-batchX_placeholder = tf.placeholder(tf.float32, [batch_size, truncated_backprop_length])
-batchY_placeholder = tf.placeholder(tf.int32, [batch_size, truncated_backprop_length])
-
-init_state = tf.placeholder(tf.float32, [batch_size, state_size])
-
-
-
-
-
-
-
-
-
-
-
-
-# batch_size = 64
-# # Each MNIST image batch is a tensor of shape (batch_size, 28, 28).
-# # Each input sequence will be of size (28, 28) (height is treated like time).
-# input_dim = 28
-
-# units = 64
-# output_size = 10  # labels are from 0 to 9
-
-# # Build the RNN model
-# def build_model(allow_cudnn_kernel=True):
-#   # CuDNN is only available at the layer level, and not at the cell level.
-#   # This means `LSTM(units)` will use the CuDNN kernel,
-#   # while RNN(LSTMCell(units)) will run on non-CuDNN kernel.
-#   if allow_cudnn_kernel:
-#     # The LSTM layer with default options uses CuDNN.
-#     lstm_layer = tf.keras.layers.LSTM(units, input_shape=(None, input_dim))
-#   else:
-#     # Wrapping a LSTMCell in a RNN layer will not use CuDNN.
-#     lstm_layer = tf.keras.layers.RNN(
-#         tf.keras.layers.LSTMCell(units),
-#         input_shape=(None, input_dim))
-#   model = tf.keras.models.Sequential([
-#       lstm_layer,
-#       tf.keras.layers.BatchNormalization(),
-#       tf.keras.layers.Dense(output_size, activation='softmax')]
-#   )
-#   return model
-
-
-# mnist = tf.keras.datasets.mnist
-
-# print(minst)
-# mnist.load_data()
-
-# # (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
-# # # #compress word vectors into 2d
-# # # #dimensionality reduction from n to 2
-# # # tsne = sklearn.manifold.TSNE(n_components=2, random_state=0)
-# # # all_word_vectors_matrix = icd2vec.wv.syn0
-
-
-# # # #####DeprecationWarning  eprecated `syn0` Attribute will be removed in 4.0.0, use self.vectors instead).
-
-
-
-
-# # # #train t-sne
-# # # all_word_vectors_matrix_2d = tsne.fit_transform(all_word_vectors_matrix)
-# # # #plot picture
-
-# # # points = pd.DataFrame(
-# # #     [
-# # #         (word, coords[0], coords[1])
-# # #         for word, coords in [
-# # #             (word, all_word_vectors_matrix_2d[icd2vec.wv.vocab[word].index])
-# # #             for word in icd2vec.wv.vocab
-# # #         ]
-# # #     ],
-# # #     columns=["word", "x", "y"]
-# # dimensionality reduction from n to 2  #####how do you do dimensionality reduction from a list of vectors in panadas df?
-
-# icdf2.head(10)
-# diagdf.head(10)
-# diagdf['vector']
-
-
-# print(all_word_vectors_matrix_2d)
-
-# # tsne = sklearn.manifold.TSNE(n_components=2, random_state=0)
-
-# # diagdf['2d'] =  diagdf['vector'].apply(lambda x: tsne.fit_transform(x))
-# # diagdf['2d']
-
-# tf.enable_eager_execution()
-
-# training_df: pd.DataFrame = pd.DataFrame(
-#     data={
-#         'feature1': np.random.rand(10),
-#         'feature2': np.random.rand(10),
-#         'feature3': np.random.rand(10),
-#         'target': np.random.randint(0, 3, 10)
-#     }
-# )
-# features = ['feature1', 'feature2', 'feature3']
-# print(training_df)
-
-# training_dataset = (
-#     tf.data.Dataset.from_tensor_slices(
-#         (
-#             tf.cast(training_df[features].values, tf.float32),
-#             tf.cast(training_df['target'].values, tf.int32)
-#         )
-#     )
-# )
-
-# for features_tensor, target_tensor in training_dataset:
-#     print(f'features:{features_tensor} target:{target_tensor}')
-
-
-
-
-
-# (x_train, y_train), (x_test, y_test) = diagdf['vector']
-
-# x_train, x_test = x_train / 255.0, x_test / 255.0
-# sample, sample_label = x_train[0], y_train[0]
-
-######LSTM
-
-# target = diagdf.pop('vector')
-# dataset = tf.data.Dataset.from_tensor_slices((diagdf.values, target.values))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# batch_size = 32
-# # batch_size sequences of length 10 with 2 values for each timestep
-# input = get_batch(X, batch_size).reshape([batch_size, 10, 2])
-# # Create LSTM cell with state size 256. Could also use GRUCell, ...
-# # Note: state_is_tuple=False is deprecated;
-# # the option might be completely removed in the future
-# cell = tf.nn.rnn_cell.LSTMCell(256, state_is_tuple=True)
-# outputs, state = tf.nn.dynamic_rnn(cell,
-#                                    input,
-#                                    sequence_length=[10]*batch_size,
-#                                    dtype=tf.float32)
-
-# predictions = tf.contrib.layers.fully_connected(state.h,
-#                                                 num_outputs=1,
-#                                                 activation_fn=None)
-# loss = get_loss(get_batch(Y).reshape([batch_size, 1]), predictions)
-
-
-]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
