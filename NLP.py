@@ -55,6 +55,7 @@ from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers import TimeDistributed
 from keras.layers.convolutional import Conv1D, MaxPooling1D
+from keras.models import load_model
 
 
 nltk.download('stopwords')
@@ -78,7 +79,7 @@ icdf2["sentence"]
 # print(icdf2["sentence"])
 
 raw_corpus = icdf2["long_title"].to_list()
-print(raw_corpus)
+# print(raw_corpus)
 
 
 #cleaned dataframe
@@ -224,19 +225,7 @@ def plot_region(x_bounds, y_bounds, points):
         ax.text(point.x + 0.005, point.y + 0.005, point.word, fontsize=11)
 
 
-
-
-
-
-
-
 # ############ know it works up to here
-
-
-
-
-
-
 
 
 def display_closestwords_tsnescatterplot(model, word, vec_size):
@@ -280,19 +269,6 @@ def display_closestwords_tsnescatterplot(model, word, vec_size):
 print (points.head(10))
 print (points.tail(10))
 plot_region(x_bounds=(0, 10), y_bounds=(0, 10), points=points)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -366,18 +342,11 @@ display_closestwords_tsnescatterplot(icd2vec, ['tuberculosis','tubercle','nervou
 display_closestwords_tsnescatterplot(icd2vec, ['psychosis','depression','nervous'])
 
 
-
-
-##############
-
-
-
-
 ##########-------------------##############
 ########        Now using patient data from patient_diag.csv or diagnoses_icd
 ### for long_title average words in sentence with TF-IDF
 ### term frequency–inverse document frequency
-icdf2.head(10)
+# icdf2.head(10)
 
 icd2vec.wv["tuberculosis"]
 
@@ -386,7 +355,7 @@ icdf2['vector'] = icdf2['Csentence'].apply(lambda x: sum(icd2vec.wv[x]))
 
 # icdf2['avg'] = icdf2['Csentence'].apply(lambda x: np.mean(icd2vec.wv[x]))
 
-icdf2.head(10)
+# icdf2.head(10)
 ### generates unique vectors for each ICD token
 
 icdf2['vector']
@@ -403,7 +372,7 @@ icdf2['vector']
 # for i in icdf2.Csentence[0]:
 #     print(i)
 
-icdf2.head(10)
+# icdf2.head(10)
 
 ###diagnoses dataframe
 #######retrieve vector by using icd index
@@ -416,7 +385,7 @@ diagdf.head(10)
 ##df.set_index(KEY).to_dict()[VALUE]
 icdf2
 dict = icdf2.to_dict()['vector']
-print(dict)
+# print(dict)
 
 icdf2['vector']['01723']
 icdf2['vector']
@@ -480,8 +449,8 @@ diagdf.head(10)
 ##### CNN-RNN  Convolutional neural, LSTM
 # (X_train, y_train) = (diagdf['vector'].values, diagdf['icd9_code'].values)
 # np.asarray(x).astype('float32')
-diagdf.dtypes
-print(np.asarray(diagdf['vector'][0]).astype("float32"))
+# diagdf.dtypes
+# print(np.asarray(diagdf['vector'][0]).astype("float32"))
 for i in diagdf['vector']:
     x = np.asarray(i).astype('float32')
 # x = np.stack(x, axis=0) 
@@ -492,9 +461,9 @@ for i in diagdf['seq_num']:
 
 # (X_train, y_train) = (np.asarray(diagdf['vector'].astype("float32")), np.asarray(diagdf['icd9_code']).astype("float32"))
 data = (x.reshape(1,-1), y.reshape(1,-1))
-model.fit(data, data, epochs=1)
+# model.fit(data, data, epochs=1)
 
-model.fit( x=data[0] , y=data[1], batch_size=10 , epochs=10 , verbose=1 , validation_data = (data[0],data[1]))
+# model.fit( x=data[0] , y=data[1], batch_size=10 , epochs=10 , verbose=1 , validation_data = (data[0],data[1]))
 
 X_train = x.reshape(-1, 1, 3)
 X_test  = x.reshape(-1, 1, 3)
@@ -505,6 +474,7 @@ model = Sequential()
 model.add(LSTM(100, input_shape=(1, 3), return_sequences=True))
 model.add(LSTM(5, input_shape=(1, 3), return_sequences=True))
 model.compile(loss="mean_absolute_error", optimizer="adam", metrics= ['accuracy'])
+model.summary()
 
 history = model.fit(X_train,y_train,epochs=100, validation_data=(X_test,y_test))
 model.save('kannan')
@@ -512,18 +482,8 @@ model = load_model('kannan')
 
 yhat = model.predict(X_train, verbose=0)
 print(yhat)
-# model.fit(X_train, y_train, batch_size = 100, epochs = 20, verbose = 1)
-history = model.fit(
-    x,
-    y,
-    batch_size=64,
-    epochs=2,
-    # We pass some validation for
-    # monitoring validation loss and metrics
-    # at the end of each epoch
-    validation_data=(x_val, y_val),
-)
-### Custom neural layer Ajit Patra Rhodes scholar suggestion Jenner Institute, University of Oxford
+
+### Custom neural layer Arijit Patra Rhodes scholar suggestion Jenner Institute, University of Oxford
 # TensorFlow and tf.keras
 
 
