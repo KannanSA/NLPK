@@ -473,7 +473,10 @@ y_test = y.reshape(-1, 1, 1)
 model = Sequential()
 model.add(LSTM(100, input_shape=(1, 3), return_sequences=True))
 model.add(LSTM(5, input_shape=(1, 3), return_sequences=True))
-model.compile(loss="mean_absolute_error", optimizer="adam", metrics= ['accuracy'])
+model.add(Dense(24))
+model.compile(optimizer='adam', loss='mse', metrics= ['mae', 'mape', 'acc'])
+
+# model.compile(loss="mean_absolute_error", optimizer="adam", metrics= ['accuracy'])
 model.summary()
 
 history = model.fit(X_train,y_train,epochs=100, validation_data=(X_test,y_test))
