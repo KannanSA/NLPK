@@ -473,7 +473,7 @@ y_test = y.reshape(-1, 1, 1)
 model = Sequential()
 model.add(LSTM(100, input_shape=(1, 3), return_sequences=True))
 model.add(LSTM(5, input_shape=(1, 3), return_sequences=True))
-model.add(Dense(24))
+model.add(Dense(3))
 model.compile(optimizer='adam', loss='mse', metrics= ['mae', 'mape', 'acc'])
 
 # model.compile(loss="mean_absolute_error", optimizer="adam", metrics= ['accuracy'])
@@ -485,6 +485,7 @@ model = load_model('kannan')
 
 yhat = model.predict(X_train, verbose=0)
 print(yhat)
+
 
 ### Custom neural layer Arijit Patra Rhodes scholar suggestion Jenner Institute, University of Oxford
 # TensorFlow and tf.keras
