@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import sklearn.manifold
+from scipy import spatial
 from gensim.models import Word2Vec
 import gensim.models.word2vec as w2v
 
@@ -359,6 +360,7 @@ icdf2['vector'] = icdf2['Csentence'].apply(lambda x: sum(icd2vec.wv[x]))
 ### generates unique vectors for each ICD token
 
 icdf2['vector']
+# icdf2.head()
 
 
 ###another for loop for each sentences
@@ -472,22 +474,63 @@ y_test = y.reshape(-1, 1, 1)
 
 model = Sequential()
 model.add(LSTM(100, input_shape=(1, 3), return_sequences=True))
+model.add(Dropout(0.2))
 model.add(LSTM(5, input_shape=(1, 3), return_sequences=True))
+model.add(Dropout(0.2))
 model.add(Dense(3))
 model.compile(optimizer='adam', loss='mse', metrics= ['mae', 'mape', 'acc'])
 
 # model.compile(loss="mean_absolute_error", optimizer="adam", metrics= ['accuracy'])
 model.summary()
 
-history = model.fit(X_train,y_train,epochs=100, validation_data=(X_test,y_test))
-model.save('kannan')
+history = model.fit(X_train,y_train,epochs=100, batch_size=32, validation_data=(X_test,y_test))
+
+# model.save('kannan')
 model = load_model('kannan')
 
 yhat = model.predict(X_train, verbose=0)
 print(yhat)
 
-
 ### Custom neural layer Arijit Patra Rhodes scholar suggestion Jenner Institute, University of Oxford
 # TensorFlow and tf.keras
 
+diagdf.head()
+# list = []
+# for i in diagdf['vector']:
+#     list.append(i)
+# points = np.array(diagdf['vector'].tolist(), dtype=object)
+# print(points)
+# tree = spatial.KDTree(points)
 
+matrix = np.array(diagdf['vector'].tolist(), dtype=object)
+
+
+# for i in diagdf['vector'].tolist():
+#     data = list(a)
+    # print(data)
+data= np.array(diagdf['vector'].tolist(), dtype=object)
+data = [a for a in data if a != [] or a != None]
+
+from scipy import spatial
+for i in data:
+    A = []
+    A.append(i)
+tree = spatial.KDTree(A)
+prediction = (A[int(tree.query(yhat)[1])])
+
+# print(prediction)
+prediction2 = [prediction[0], prediction[1], prediction[2]]
+print(prediction2)
+
+
+diagdf.loc[~diagdf['vector'].isin(prediction2)]
+icd_prediction = diagdf['icd9_code'][~diagdf['vector'].isin(prediction2)].iloc[-1]
+
+print("The ICD prediction is {}, {}".format(icd_prediction, icdf2['sentence'].loc[icd_prediction]))
+
+
+# for i in diagdf['vector']:
+#     if i == prediction2:
+#         print(i)
+
+# print(y)
