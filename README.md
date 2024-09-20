@@ -16,6 +16,11 @@ conda activate NLP
 python3 NLP.py
 ```
 
+```bash
+tensorboard --logdir=embedding_projector/
+```
+
+
 ![NLP](/NLP1.png)
 ![NLP](/NLP3.jpeg)
 ![NLP](/NLP2.png)
