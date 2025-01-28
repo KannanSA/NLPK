@@ -29,6 +29,8 @@ from keras.utils import to_categorical
 
 # For saving embeddings and metadata for TensorFlow Embedding Projector
 import tensorflow as tf
+from tensorflow.keras.utils import plot_model
+
 
 # Load the data
 print("Loading data from 'd_icd_diagnoses.csv'...")
@@ -188,6 +190,12 @@ model.add(Dense(num_classes, activation='softmax'))  # Output layer for classifi
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 model.summary()
 
+plot_model(
+    model, 
+    to_file='lstm_arch.png', 
+    show_shapes=True, 
+    show_layer_names=True
+)
 # Train the model
 print("Training the LSTM model...")
 history = model.fit(
@@ -216,6 +224,53 @@ results = pd.DataFrame({
 print("First 5 predictions vs actual results:")
 print(results.head())
 
+
+from sklearn.metrics import confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# (A) Generate confusion matrix using numeric label indices
+#     If you want to see the matrix in terms of label indices:
+cm_labels = confusion_matrix(y_test_classes, y_pred_classes)
+print("Confusion matrix (numeric labels):\n", cm_labels)
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm_labels, annot=True, fmt='d', cmap='Blues')
+plt.title("Confusion Matrix (Label Indices)")
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.savefig("confusion_matrix.pdf", bbox_inches='tight')
+plt.show()
+
+# (B) Optionally, generate confusion matrix using actual ICD-9 codes as labels.
+#     Be cautious if you have many distinct ICD codes, as the matrix can become large.
+
+unique_codes = sorted(list(set(actual_icd_codes) | set(predicted_icd_codes)))
+cm_codes = confusion_matrix(actual_icd_codes, predicted_icd_codes, labels=unique_codes)
+
+print("Confusion Matrix (ICD-9 Codes):")
+print(cm_codes)
+
+plt.figure(figsize=(12, 10))
+sns.heatmap(
+    cm_codes,
+    annot=True,
+    fmt='d',
+    cmap='Blues',
+    xticklabels=unique_codes,
+    yticklabels=unique_codes
+)
+plt.title("Confusion Matrix (ICD-9 Codes)")
+plt.xlabel("Predicted ICD-9")
+plt.ylabel("Actual ICD-9")
+plt.savefig("confusion_matrix_codes.pdf", bbox_inches='tight')
+plt.show()
+
+# (C) Print a classification report (numeric labels) for precision, recall, F1
+report = classification_report(y_test_classes, y_pred_classes, zero_division=0)
+print("Classification Report (numeric labels):\n", report)
+
+
 # Optionally, print the descriptions for each prediction
 print("Printing the actual and predicted ICD-9 codes with their descriptions...")
 for idx in range(len(results)):
@@ -225,3 +280,75 @@ for idx in range(len(results)):
     predicted_desc = ' '.join(icdf2.loc[predicted_code]['cleaned_long_title'])
     print(f"Actual ICD-9 Code: {actual_code}, Description: {actual_desc}")
     print(f"Predicted ICD-9 Code: {predicted_code}, Description: {predicted_desc}\n")
+
+# Optional: Visualize word embeddings with t-SNE
+print("Preparing to visualize word embeddings using t-SNE...")
+all_word_vectors_matrix = icd2vec.wv.vectors  # For gensim 4.x
+
+# Reduce dimensionality
+tsne = TSNE(n_components=2, random_state=0)
+all_word_vectors_matrix_2d = tsne.fit_transform(all_word_vectors_matrix)
+
+# Create a DataFrame for visualization
+points = pd.DataFrame(
+    [
+        (word, coords[0], coords[1])
+        for word, coords in zip(icd2vec.wv.index_to_key, all_word_vectors_matrix_2d)
+    ],
+    columns=["word", "x", "y"]
+)
+
+# Plot the embeddings
+sns.set_context("poster")
+print("Plotting word embeddings...")
+points.plot.scatter("x", "y", s=10, figsize=(20, 12))
+plt.show()
+
+def create_bilstm_model(vocab_size=5000, embedding_dim=100, max_sequence_length=200):
+    """Creates a simple Bidirectional LSTM model."""
+    import tensorflow as tf
+
+    model = tf.keras.Sequential()
+    
+    # Embedding layer
+    model.add(tf.keras.layers.Embedding(
+        input_dim=vocab_size,
+        output_dim=embedding_dim,
+        input_length=max_sequence_length,
+        name="Embedding"
+    ))
+    
+    # Bidirectional LSTM
+    model.add(tf.keras.layers.Bidirectional(
+        tf.keras.layers.LSTM(128, return_sequences=False),
+        name="Bidirectional_LSTM"
+    ))
+    
+    # Dense output layer
+    model.add(tf.keras.layers.Dense(10, activation='softmax', name="Output_Dense"))
+    
+    # Compile model
+    model.compile(
+        optimizer='adam',
+        loss='categorical_crossentropy',
+        metrics=['accuracy']
+    )
+    
+    # Make sure to return the model here
+    return model
+
+if __name__ == "__main__":
+    model = create_bilstm_model()
+    # Print a summary
+    print(model.summary())
+
+    # Plot the model
+    plot_model(
+        model,
+        to_file='lstm_arch.png',    # Saves diagram as a PNG
+        show_shapes=True,           # Show shape of input/output tensors
+        show_layer_names=True,       # Show layer names
+        expand_nested=False,         # If you have nested models, set to True
+        dpi=96                       # Dots per inch
+    )
+    print("Model architecture saved as lstm_arch.png")

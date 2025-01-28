@@ -23,7 +23,7 @@ from scipy import spatial
 
 from keras.models import Sequential, load_model
 from keras.layers import LSTM, Dense, Dropout
-from sklearn.model_selection import train_test_split
+from sklearn.model_s≈election import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from keras.utils import to_categorical
 
